@@ -1,6 +1,6 @@
 'use strict';
 
-const Diamond = require('../models/diamond.model');
+const Diamond = require('../models/diamond_v1.model');
 const logger = require('../utils/logger');
 
 /**

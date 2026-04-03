@@ -10,7 +10,7 @@
 
 /** Priority-ordered aliases for each canonical field */
 const FIELD_ALIASES = {
-  certificate_num: ['reportno', 'report_no', 'certificateno', 'certificate_no', 'certno', 'cert_no', 'reportnumber', 'report_number'],
+  certificate_num: ['certificate_num', 'certificatenum', 'reportno', 'report_no', 'certificateno', 'certificate_no', 'certno', 'cert_no', 'reportnumber', 'report_number'],
   stock_num:       ['stockid', 'stock_id', 'stocknum', 'stock_num', 'stock', 'id'],
   video_url:       ['video', 'video_url', 'videourl', 'v360url', 'v360_url'],
   image_url:       ['image', 'image_url', 'imageurl', 'img', 'img_url'],

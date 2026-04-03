@@ -77,7 +77,7 @@ async function uploadStripsToS3(certNumber, stripPaths) {
 
   for (let i = 0; i < stripPaths.length; i++) {
     try {
-      const s3Key = `360-video/${certNumber}/strip_${i}.webp`;
+      const s3Key = `360-video-v2/${certNumber}/strip_${i}.webp`;
       const url   = await uploadFileToS3(stripPaths[i], s3Key, 'image/webp');
       uploadedUrls.push(url || '');
     } catch (err) {
@@ -130,7 +130,7 @@ async function uploadMainImageToS3(certNumber, imageUrl) {
       .webp({ quality: 85 })
       .toBuffer();
 
-    const url = await uploadBufferToS3(webpBuffer, `360-video/${certNumber}/main.webp`, 'image/webp');
+    const url = await uploadBufferToS3(webpBuffer, `360-video-v2/${certNumber}/main.webp`, 'image/webp');
     if (url) {
       logger.info(`[${certNumber}] Image uploaded as WebP: ${url}`);
       return url;
@@ -147,7 +147,7 @@ async function uploadMainImageToS3(certNumber, imageUrl) {
       .jpeg({ quality: 85 })
       .toBuffer();
 
-    const url = await uploadBufferToS3(jpegBuffer, `360-video/${certNumber}/main.jpg`, 'image/jpeg');
+    const url = await uploadBufferToS3(jpegBuffer, `360-video-v2/${certNumber}/main.jpg`, 'image/jpeg');
     if (url) {
       logger.info(`[${certNumber}] Image uploaded as JPEG: ${url}`);
       return url;
@@ -160,7 +160,7 @@ async function uploadMainImageToS3(certNumber, imageUrl) {
   // ── Stage 4: Raw upload with original extension ───────────────
   try {
     const ext    = extensionFromContentType(originalContentType, imageUrl);
-    const s3Key  = `360-video/${certNumber}/main.${ext}`;
+    const s3Key  = `360-video-v2/${certNumber}/main.${ext}`;
     const url    = await uploadBufferToS3(imageBuffer, s3Key, originalContentType);
     if (url) {
       logger.info(`[${certNumber}] Image uploaded as raw .${ext}: ${url}`);
