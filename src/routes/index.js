@@ -3,7 +3,8 @@
 const router = require('express').Router();
 const upload = require('../middleware/upload.middleware');
 const { uploadCSV, getJobStatus, cancelJob } = require('../controllers/upload.controller');
-const { listProducts, getProduct }           = require('../controllers/product.controller');
+const imageUploadRoutes = require('../modules/image-upload/routes');
+const { listProducts, getProduct } = require('../controllers/product.controller');
 
 // POST /upload-csv  — upload CSV, start background job
 router.post('/upload-csv', upload.single('csv'), uploadCSV);
@@ -24,5 +25,7 @@ router.get('/api/products/:certificateNum', getProduct);
 router.get('/health', (_req, res) => {
   res.json({ status: 'ok', ts: new Date().toISOString() });
 });
+
+router.use('/image-upload', imageUploadRoutes);
 
 module.exports = router;
