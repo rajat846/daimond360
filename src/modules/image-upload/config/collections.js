@@ -6,10 +6,10 @@
  * DB collection  →  S3 folder under /stones/<folder>/<certNum>/main.webp
  */
 const COLLECTION_MAP = [
-  { collection: 'diamondns',  s3Folder: 'natural-white'   },
-  { collection: 'diamondls',  s3Folder: 'lab-white'       },
-  { collection: 'diamondfs',  s3Folder: 'natural-colored' },
-  { collection: 'diamondfls', s3Folder: 'lab-colored'     },
+  // { collection: 'diamondns',  s3Folder: 'natural-white'   },
+  // { collection: 'diamondls',  s3Folder: 'lab-white'       },
+  // { collection: 'diamondfs',  s3Folder: 'natural-colored' },
+  // { collection: 'diamondfls', s3Folder: 'lab-colored'     },
   { collection: 'gemstones',  s3Folder: 'gemstones'       },
 ];
 
@@ -19,6 +19,7 @@ const COLLECTION_MAP = [
  */
 function buildS3Key(s3Folder, certNum) {
   return `stones/${s3Folder}/${certNum}/main.webp`;
+  // return `stones/${s3Folder}/${certNum}/main.avif`;
 }
 
 module.exports = { COLLECTION_MAP, buildS3Key };

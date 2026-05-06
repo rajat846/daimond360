@@ -1,11 +1,11 @@
 'use strict';
 
-const { v4: uuidv4 }            = require('uuid');
+const { v4: uuidv4 } = require('uuid');
 const { enqueueImageUploadJob } = require('./queues/image-upload.queue');
-const { COLLECTION_MAP }        = require('./config/collections');
-const ImageUploadJob            = require('./models/image-upload-job.model');
-const mongoose                  = require('mongoose');
-const logger                    = require('../../utils/logger');
+const { COLLECTION_MAP } = require('./config/collections');
+const ImageUploadJob = require('./models/image-upload-job.model');
+const mongoose = require('mongoose');
+const logger = require('../../utils/logger');
 
 /* ─────────────────────────────────────────────
    POST /image-upload/start
@@ -100,7 +100,7 @@ async function listImageUploadJobs(req, res) {
 ───────────────────────────────────────────── */
 async function rollbackCollection(req, res) {
   const { collection } = req.params;
-  const { certNum }    = req.body || {};
+  const { certNum } = req.body || {};
 
   const valid = COLLECTION_MAP.find((c) => c.collection === collection);
   if (!valid) {
@@ -111,11 +111,24 @@ async function rollbackCollection(req, res) {
   }
 
   try {
-    const db  = mongoose.connection.db;
+    const db = mongoose.connection.db;
     const col = db.collection(collection);
 
+    // const filter = certNum
+    //   ? { image_url_old: { $exists: true, $ne: null }, certificate_num: certNum }
+    //   : { image_url_old: { $exists: true, $ne: null } };
+
+    // gemstone condition for stock number
+
+    const certField = collection === 'gemstones'
+      ? 'stock_num'
+      : 'certificate_num';
+
     const filter = certNum
-      ? { image_url_old: { $exists: true, $ne: null }, certificate_num: certNum }
+      ? {
+        image_url_old: { $exists: true, $ne: null },
+        [certField]: certNum,
+      }
       : { image_url_old: { $exists: true, $ne: null } };
 
     const total = await col.countDocuments(filter);
@@ -126,15 +139,15 @@ async function rollbackCollection(req, res) {
     }
 
     let rolledBack = 0;
-    let failed     = 0;
-    const cursor   = col.find(filter).batchSize(500);
+    let failed = 0;
+    const cursor = col.find(filter).batchSize(500);
 
     for await (const doc of cursor) {
       try {
         await col.updateOne(
           { _id: doc._id },
           {
-            $set:   { image_url: doc.image_url_old },
+            $set: { image_url: doc.image_url_old },
             $unset: { image_url_old: '', main_image_s3: '', has_img: '' },
           }
         );

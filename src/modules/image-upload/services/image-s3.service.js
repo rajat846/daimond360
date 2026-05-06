@@ -9,13 +9,13 @@ const logger       = require('../../../utils/logger');
 const { withRetry } = require('../../../utils/retry');
 
 /**
- * MIGRATE mode:  1200px + quality 60  → ~30% of original size
- * UPLOAD mode:   3000px + quality 85  → high quality, no aggressive compression
+ * MIGRATE mode:  1200px + quality 70  → ~30% of original size
+ * UPLOAD mode:   3000px + quality 80  → high quality, no aggressive compression
  */
 const UPLOAD_MAX_PX  = 3000;
 const MIGRATE_MAX_PX = 1200;
-const UPLOAD_QUALITY  = 85;
-const MIGRATE_QUALITY = 60;
+const UPLOAD_QUALITY  = 80;
+const MIGRATE_QUALITY = 70;
 const SHARP_OPTIONS   = { limitInputPixels: false };
 
 let _s3Client = null;
@@ -75,6 +75,19 @@ async function toWebpBuffer(rawBuffer, mode = 'upload') {
     .toBuffer();
 }
 
+// async function toAvifBuffer(rawBuffer, mode = 'upload') {
+//   const maxPx   = mode === 'migrate' ? MIGRATE_MAX_PX : UPLOAD_MAX_PX;
+//   const quality = mode === 'migrate' ? MIGRATE_QUALITY : UPLOAD_QUALITY;
+
+//   return sharp(rawBuffer, SHARP_OPTIONS)
+//     // .resize(maxPx, maxPx, { fit: 'inside', withoutEnlargement: true })
+//     .avif({
+//       // quality,
+//       effort: 4 // 0–9 (increase if you want smaller size but slower)
+//     })
+//     .toBuffer();
+// }
+
 /* ─────────────────────────────────────────────
    Upload buffer → S3
 ───────────────────────────────────────────── */
@@ -89,10 +102,12 @@ async function uploadBufferToS3(buffer, s3Key) {
         Key:         s3Key,
         Body:        buffer,
         ContentType: 'image/webp',
+        ACL: 'public-read' 
+        // ContentType: 'image/avif',
       },
     });
     const result = await uploader.done();
-    return result.Location || `https://${bucket}.s3.amazonaws.com/${s3Key}`;
+    return `https://${bucket}/${s3Key}`;
   }, 3, 2000, s3Key);
 }
 
@@ -106,9 +121,11 @@ async function downloadConvertUpload(imageUrl, s3Key, certNum) {
 
   logger.info(`[img-upload][${certNum}] Converting to WebP (${rawBuffer.length} bytes)`);
   const webpBuffer = await toWebpBuffer(rawBuffer, 'upload');
+  // const avifBuffer = await toAvifBuffer(rawBuffer, 'upload');
 
   logger.info(`[img-upload][${certNum}] Uploading to S3: ${s3Key}`);
   const s3Url = await uploadBufferToS3(webpBuffer, s3Key);
+  // const s3Url = await uploadBufferToS3(avifBuffer, s3Key);
 
   logger.info(`[img-upload][${certNum}] Done → ${s3Url}`);
   return { s3Url };
@@ -124,12 +141,15 @@ async function downloadCompressUpload(imageUrl, s3Key, certNum) {
 
   logger.info(`[img-migrate][${certNum}] Compressing to ~30% (${rawBuffer.length} bytes)`);
   const webpBuffer = await toWebpBuffer(rawBuffer, 'migrate');
-
+  // const avifBuffer = await toAvifBuffer(rawBuffer, 'migrate');
   const ratio = ((webpBuffer.length / rawBuffer.length) * 100).toFixed(1);
+  // const ratio = ((avifBuffer.length / rawBuffer.length) * 100).toFixed(1);
   logger.info(`[img-migrate][${certNum}] Compressed: ${webpBuffer.length} bytes (${ratio}% of original)`);
+  // logger.info(`[img-migrate][${certNum}] Compressed: ${avifBuffer.length} bytes (${ratio}% of original)`);
 
   logger.info(`[img-migrate][${certNum}] Uploading to S3: ${s3Key}`);
   const s3Url = await uploadBufferToS3(webpBuffer, s3Key);
+  // const s3Url = await uploadBufferToS3(avifBuffer, s3Key);
 
   logger.info(`[img-migrate][${certNum}] Done → ${s3Url}`);
   return { s3Url };

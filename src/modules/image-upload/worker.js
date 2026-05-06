@@ -65,7 +65,11 @@ function classifyDoc(doc) {
    Process one document
 ───────────────────────────────────────────── */
 async function processDoc(doc, s3Folder, collectionName) {
-  const certNum = doc.certificate_num || doc.cert_num || doc.certNo || String(doc._id);
+  // const certNum = doc.certificate_num || doc.cert_num || doc.certNo || String(doc._id);
+  const certNum =
+  collectionName === 'gemstones'
+    ? (doc.stock_num || String(doc._id))
+    : (doc.certificate_num || doc.cert_num || doc.certNo || String(doc._id));
   const kind    = classifyDoc(doc);
 
   if (kind === 'skip') {
@@ -167,7 +171,7 @@ async function processCollection(collectionName, s3Folder, jobEntry, jobId) {
   const col    = db.collection(collectionName);
   const filter = eligibleFilter();
 
-  const total     = Math.min(await col.countDocuments(filter), 1000);
+  const total     = Math.min(await col.countDocuments(filter));
   jobEntry.total  = total;
   jobEntry.status = 'running';
   logger.info(`[img-migrate][${collectionName}] Eligible docs: ${total}`);
@@ -182,7 +186,7 @@ async function processCollection(collectionName, s3Folder, jobEntry, jobId) {
     return;
   }
 
-  const cursor = col.find(filter).limit(1000).batchSize(BATCH_SIZE);
+  const cursor = col.find(filter).batchSize(BATCH_SIZE);
   let batch    = [];
 
   for await (const doc of cursor) {
